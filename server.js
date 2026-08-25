@@ -6,10 +6,14 @@ const { Pool } = require("pg");
 const app = express();
 const PORT = process.env.PORT || 10000;
 const DATABASE_URL = process.env.DATABASE_URL;
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "soopgodsky221010><";
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 
 if (!DATABASE_URL) {
   console.error("DATABASE_URL 환경변수가 설정되지 않았습니다.");
+  process.exit(1);
+}
+if (!ADMIN_PASSWORD) {
+  console.error("ADMIN_PASSWORD 환경변수가 설정되지 않았습니다.");
   process.exit(1);
 }
 
@@ -41,6 +45,17 @@ async function initDb() {
   `);
   console.log("PostgreSQL 초기화 완료");
 }
+
+
+
+// 관리자 로그인: 실제 비밀번호는 서버(Render)의 ADMIN_PASSWORD만 사용합니다.
+app.post("/api/admin/login", (req, res) => {
+  const password = String(req.body?.password ?? "");
+  if (!password || password !== ADMIN_PASSWORD) {
+    return res.status(401).json({ ok: false, error: "관리자 인증에 실패했습니다." });
+  }
+  return res.json({ ok: true });
+});
 
 function validKey(req, res, next) {
   if (!ALLOWED_KEYS.has(req.params.key)) {

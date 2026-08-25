@@ -197,8 +197,8 @@ body.dark nav.top-nav{
   <section class="hero">
     <div>
       <div class="eyebrow">SKY COLLECTION</div>
-      <h1>이달의 의상</h1>
-      <p class="desc"></p>
+      <h1>의상목록</h1>
+      <p class="desc">하늘이의 다양한 의상을 한곳에서 확인할 수 있어.</p>
     </div>
   </section>
   <div class="filters" id="filters"></div>
@@ -220,9 +220,6 @@ body.dark nav.top-nav{
 </div>
 
 <footer class="footer">© 2026 SKY - DAY</footer>
-
-<!-- SKY-DAY FORCE ADMIN PASSWORD V2 -->
-
 <!-- SKY-DAY RENDER + POSTGRESQL SYNC V1 -->
 <script>
 
@@ -241,7 +238,7 @@ function calculateUpboCount(text){
 (function(){
   var KEYS = ["gaksky_calendar_shared_v1", "skyCalendarEvents", "sky_notice_data", "skyDresses", "skyUpboItems"];
   var API = '/api/data/';
-  var PASSWORD = 'soopgodsky221010><';
+  
 
   // Load the latest shared data before each page's existing scripts run.
   KEYS.forEach(function(key){
@@ -276,7 +273,7 @@ function calculateUpboCount(text){
       var xhr = new XMLHttpRequest();
       xhr.open('PUT', API + encodeURIComponent(key), true);
       xhr.setRequestHeader('Content-Type', 'application/json');
-      xhr.setRequestHeader('x-admin-password', PASSWORD);
+      xhr.setRequestHeader('x-admin-password', sessionStorage.getItem('sky_day_admin_password') || '');
       xhr.send(JSON.stringify({ value: JSON.parse(value) }));
     } catch (e) {
       console.warn('공용 저장에 실패했습니다.', e);
@@ -303,17 +300,6 @@ function calculateUpboCount(text){
       } catch(e) {}
     });
   }, 10000);
-})();
-</script>
-
-<script>
-(function(){
-  var PASSWORD='soopgodsky221010><';
-  var KEYS=['sky_day_shared_admin_password_v1', 'skyCalAdminPassword', 'sky_notice_password', 'skyDressPassword', 'skyUpboPassword', 'gaksky_admin_password', 'admin_password', 'adminPassword'];
-  KEYS.forEach(function(k){ localStorage.setItem(k,PASSWORD); });
-
-  window.__SKY_DAY_ADMIN_PASSWORD__=function(){ return 'soopgodsky221010><'; };
-  window.SKY_DAY_ADMIN_PASSWORD=PASSWORD;
 })();
 </script>
 
@@ -434,20 +420,33 @@ $("#themeBtn").onclick=()=>{
 if(localStorage.getItem("skyDressTheme")==="dark")document.body.classList.add("dark");
 
 function showAdmin(){
-  if(localStorage.getItem("sky_day_shared_admin")==="1"){
+  if(localStorage.getItem("sky_day_shared_admin")==="1" && sessionStorage.getItem("sky_day_admin_password")){
     $("#loginArea").classList.add("hidden");$("#adminArea").classList.remove("hidden");
   }
 }
 showAdmin();
 
-$("#login").onclick=()=>{
+$("#login").onclick=async()=>{
   const pw=$("#pw").value;
-  if(pw===window.__SKY_DAY_ADMIN_PASSWORD__()){
-    localStorage.setItem("sky_day_shared_admin","1");$("#pw").value="";showAdmin();renderAdmin();
-  }else alert("비밀번호가 맞지 않습니다.");
+  try{
+    const r=await fetch("/api/admin/login",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({password:pw})
+    });
+    if(!r.ok) throw new Error("인증 실패");
+    sessionStorage.setItem("sky_day_admin_password",pw);
+    localStorage.setItem("sky_day_shared_admin","1");
+    $("#pw").value="";
+    showAdmin();
+    renderAdmin();
+  }catch(e){
+    alert("비밀번호가 맞지 않습니다.");
+  }
 };
 $("#logout").onclick=()=>{
   localStorage.removeItem("sky_day_shared_admin");
+  sessionStorage.removeItem("sky_day_admin_password");
   $("#adminArea").classList.add("hidden");$("#loginArea").classList.remove("hidden");
 };
 $("#dressForm").onsubmit=e=>{
@@ -497,7 +496,7 @@ function bindDressCardClicks(){
 }
 
 function renderAdmin(){
-  if(localStorage.getItem("sky_day_shared_admin")!=="1") return;
+  if(localStorage.getItem("sky_day_shared_admin")!=="1" || !sessionStorage.getItem("sky_day_admin_password")) return;
 
   const list=$("#adminList");
   if(!list) return;
