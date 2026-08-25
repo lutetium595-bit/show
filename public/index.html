@@ -164,15 +164,8 @@ body.dark nav.top-nav{
   <div class="logo">SKY</div>
   <div class="header-actions">
     <button class="icon" id="themeBtn" title="다크모드">☼</button>
-    <button class="icon" id="hamb" title="메뉴">☰</button>
     <button class="icon" id="adminBtn" title="관리자 모드">⚙</button>
   </div>
-  <nav class="menu" id="menu">
-    <a href="../index.html">프로필</a>
-    <a href="../notice/index.html">공지사항</a>
-    <a href="../calendar/index.html">캘린더</a>
-    <a href="../upbo/index.html">업보목록</a>
-  </nav>
   <div class="admin-drawer" id="adminDrawer">
     <div id="loginArea" class="adminrow">
       <input id="pw" type="password" placeholder="관리자 비밀번호">
@@ -420,11 +413,8 @@ function closeModal(){$("#modalBg").classList.remove("show")}
 $("#closeModal").onclick=closeModal;
 $("#modalBg").onclick=e=>{if(e.target===$("#modalBg"))closeModal()};
 document.addEventListener("keydown",e=>{if(e.key==="Escape")closeModal()});
-
-$("#hamb").onclick=e=>{e.stopPropagation();$("#menu").classList.toggle("show");$("#adminDrawer").classList.remove("show")};
 $("#adminBtn").onclick=e=>{e.stopPropagation();$("#adminDrawer").classList.toggle("show");$("#menu").classList.remove("show")};
 document.addEventListener("click",e=>{
-  if(!$("#menu").contains(e.target) && e.target!==$("#hamb")) $("#menu").classList.remove("show");
   if(!$("#adminDrawer").contains(e.target) && e.target!==$("#adminBtn")) $("#adminDrawer").classList.remove("show");
 });
 function updateThemeIcon(){
