@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>SKY - 의상목록</title>
+<style>
+:root{
+  --bg:#edf4fa; --card:#ffffff; --text:#243241; --sub:#758393; --line:#dce6ee;
+  --soft:#f6f9fc; --accent:#7fa9c9; --shadow:0 12px 30px rgba(66,90,110,.10);
+}
+body.dark{
+  --bg:#17212b; --card:#202c37; --text:#edf4f8; --sub:#a7b5c0; --line:#344553;
+  --soft:#1b2630; --accent:#8bb5d4; --shadow:0 14px 34px rgba(0,0,0,.28);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,"Noto Sans KR",sans-serif;transition:.2s}
+button,input,select,textarea{font:inherit}
+.header{height:64px;background:var(--card);border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 18px;position:sticky;top:0;z-index:5000}
+.logo{font-weight:800;letter-spacing:2px;font-size:20px}
+.header-actions{margin-left:auto;display:flex;align-items:center;gap:8px}
+.icon{width:36px;height:36px;border:0;background:transparent;color:var(--text);font-size:20px;border-radius:10px;cursor:pointer}
+.icon:hover{background:var(--soft)}
+.menu{position:absolute;right:16px;top:58px;width:180px;background:var(--card);border:1px solid var(--line);border-radius:13px;box-shadow:var(--shadow);padding:7px;display:none;z-index:7000}
+.menu.show{display:block}
+.menu a{display:block;padding:11px 12px;color:var(--text);text-decoration:none;border-radius:9px;font-size:14px}
+.menu a:hover{background:var(--soft)}
+.admin-drawer{display:none;position:absolute;right:14px;top:57px;width:min(430px,calc(100vw - 28px));max-height:80vh;overflow:auto;padding:16px;background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);z-index:7001}
+.admin-drawer.show{display:block}
+.hidden{display:none!important}
+.container{max-width:1080px;margin:0 auto;padding:34px 18px 55px}
+.hero{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;margin-bottom:24px}
+.eyebrow{font-size:11px;letter-spacing:2px;color:var(--sub);margin-bottom:8px}
+h1{margin:0;font-size:30px;letter-spacing:-1px}
+.desc{margin:10px 0 0;color:var(--sub);font-size:14px}
+.filters{display:flex;gap:7px;flex-wrap:wrap;margin:22px 0}
+.filter{border:1px solid var(--line);background:var(--card);color:var(--sub);padding:8px 13px;border-radius:999px;cursor:pointer;font-size:13px}
+.filter.active{background:var(--text);color:var(--card);border-color:var(--text)}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:17px;overflow:hidden;box-shadow:0 5px 18px rgba(50,70,90,.05);cursor:pointer;transition:.2s}
+.card:hover{transform:translateY(-3px);box-shadow:var(--shadow)}
+.thumb{height:250px;background:var(--soft);display:flex;align-items:center;justify-content:center;overflow:hidden}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.noimg{font-size:13px;color:var(--sub)}
+.card-body{padding:13px 14px 15px}
+.cat{font-size:10px;color:var(--accent);font-weight:800;letter-spacing:.8px;margin-bottom:6px}
+.name{font-size:15px;font-weight:800}
+.card-desc{margin-top:7px;font-size:12px;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.empty{grid-column:1/-1;padding:70px 20px;text-align:center;color:var(--sub);background:var(--card);border:1px dashed var(--line);border-radius:17px}
+.footer{text-align:center;padding:25px;color:var(--sub);font-size:12px}
+.form{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.form input,.form select,.form textarea,.adminrow input{width:100%;padding:10px;border:1px solid var(--line);border-radius:9px;background:var(--soft);color:var(--text)}
+.form textarea{grid-column:1/-1;min-height:80px;resize:vertical}
+.full{grid-column:1/-1}
+.btn{border:1px solid var(--line);background:var(--card);color:var(--text);padding:9px 12px;border-radius:9px;cursor:pointer}
+.btn.active{background:var(--text);color:var(--card);border-color:var(--text)}
+.adminrow{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.adminrow input{flex:1;min-width:150px}
+.admin-list{margin-top:14px;border-top:1px solid var(--line)}
+.admin-item{display:flex;gap:8px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);font-size:13px}
+.admin-item .mini{width:36px;height:36px;border-radius:8px;background:var(--soft);object-fit:cover}
+.admin-item .grow{flex:1;min-width:0}
+.modal-bg{position:fixed;inset:0;background:rgba(10,18,25,.45);display:none;align-items:center;justify-content:center;padding:18px;z-index:9000}
+.modal-bg.show{display:flex}
+.modal{width:min(700px,100%);max-height:88vh;overflow:auto;background:var(--card);border:1px solid var(--line);border-radius:18px;box-shadow:0 24px 70px rgba(0,0,0,.35);padding:18px}
+.modal-top{display:flex;justify-content:flex-end;margin-bottom:8px}
+.close{border:1px solid var(--line);background:transparent;color:var(--text);width:34px;height:34px;border-radius:9px;font-size:20px;cursor:pointer}
+.detail{display:grid;grid-template-columns:minmax(220px,1fr) 1fr;gap:22px;padding:4px}
+.detail-img{width:100%;min-height:330px;background:var(--soft);border-radius:13px;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.detail-img img{width:100%;height:100%;object-fit:cover}
+.detail-gallery{display:flex;flex-direction:column;gap:10px}
+.detail-img{cursor:pointer}
+.detail-thumbs{display:flex;gap:7px;flex-wrap:wrap}
+.detail-thumb{width:58px;height:58px;border:1px solid var(--line);border-radius:9px;overflow:hidden;background:var(--soft);padding:0;cursor:pointer}
+.detail-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.detail-thumb.active{outline:2px solid var(--accent)}
+.detail h2{margin:5px 0 8px;font-size:24px}
+.detail-cat{font-size:11px;font-weight:800;color:var(--accent);letter-spacing:1px}
+.detail-text{font-size:14px;line-height:1.8;color:var(--sub);white-space:pre-wrap}
+.photo-description{font-size:16px;line-height:1.65;color:var(--text);padding:9px 4px 0;margin:0;min-height:30px;font-weight:500}
+.photo-count{font-size:11px;color:var(--sub);margin-top:8px;text-align:center;width:100%}
+.photo-input-area{border:1px solid var(--line);border-radius:10px;padding:10px;background:var(--soft)}
+.photo-input-head{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:13px;margin-bottom:8px}
+.small-btn{padding:6px 9px;font-size:12px}
+.photo-row{display:grid;grid-template-columns:1.15fr 1fr auto;gap:7px;margin-bottom:7px;align-items:center}
+.photo-row input{min-width:0}
+.photo-row .remove-photo{padding:7px 9px;font-size:12px}
+.photo-help{font-size:11px;color:var(--sub);margin-top:4px}
+@media(max-width:620px){.photo-row{grid-template-columns:1fr 1fr}.photo-row .remove-photo{grid-column:1/-1}}
+@media(max-width:850px){.grid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:620px){.header{height:58px}.container{padding-top:25px}.hero{display:block}h1{font-size:25px}.grid{grid-template-columns:repeat(2,1fr);gap:11px}.thumb{height:190px}.card-body{padding:11px}.detail{grid-template-columns:1fr}.detail-img{min-height:280px}.form{grid-template-columns:1fr}.admin-drawer{top:53px}}
+
+/* NOTICE / CALENDAR와 통일한 다크모드 */
+body.dark,
+.dark{
+  --bg:#18243a;
+  --panel:#223149;
+  --soft:#263750;
+  --line:#37465f;
+  --text:#f3f6fb;
+  --sub:#aebbd0;
+  --accent:#9fb7d9;
+  --accent2:#7f9ac0;
+  --shadow:0 14px 35px rgba(0,0,0,.28);
+}
+body.dark{
+  background:#18243a;
+  color:var(--text);
+}
+body.dark .topbar,
+body.dark .card,
+body.dark .admin-drawer,
+body.dark .modal-content,
+body.dark .detail-modal,
+body.dark .admin-item,
+body.dark .photo-input-area{
+  background:var(--panel);
+  border-color:var(--line);
+}
+body.dark input,
+body.dark textarea,
+body.dark select{
+  background:#182235;
+  color:var(--text);
+  border-color:var(--line);
+}
+body.dark input::placeholder,
+body.dark textarea::placeholder{color:#8290a6}
+body.dark .btn{
+  background:#273449;
+  color:var(--text);
+  border-color:#43536d;
+}
+body.dark .btn:hover{background:#33435a}
+body.dark .detail-gallery,
+body.dark .detail-thumbs{background:transparent}
+body.dark .detail-thumb{border-color:var(--line);background:#182235}
+body.dark .detail-thumb.active{border-color:var(--accent)}
+
+
+/* 첨부 이미지와 같은 전체 페이지 다크 배경 */
+body.dark,
+body.dark .page,
+body.dark .app,
+body.dark main{
+  background-color:#18243a;
+}
+
+
+/* 다크모드 상단바: 전체 배경보다 한 단계 밝은 네이비 */
+body.dark .topbar,
+body.dark header,
+body.dark .header,
+body.dark .navbar,
+body.dark nav.top-nav{
+  background:#263752 !important;
+  border-color:#3a4e6b !important;
+}
+
+</style>
+</head>
+<body>
+<header class="header">
+  <div class="logo">SKY</div>
+  <div class="header-actions">
+    <button class="icon" id="themeBtn" title="다크모드">☼</button>
+    <button class="icon" id="hamb" title="메뉴">☰</button>
+    <button class="icon" id="adminBtn" title="관리자 모드">⚙</button>
+  </div>
+  <nav class="menu" id="menu">
+    <a href="../index.html">프로필</a>
+    <a href="../notice/index.html">공지사항</a>
+    <a href="../calendar/index.html">캘린더</a>
+    <a href="../upbo/index.html">업보목록</a>
+  </nav>
+  <div class="admin-drawer" id="adminDrawer">
+    <div id="loginArea" class="adminrow">
+      <input id="pw" type="password" placeholder="관리자 비밀번호">
+      <button class="btn active" id="login">로그인</button>
+    </div>
+    <div id="adminArea" class="hidden">
+      <h3 style="margin:0 0 12px">의상목록 관리</h3>
+      <form class="form" id="dressForm">
+        <input id="name" placeholder="의상 이름" required>
+        <select id="cat"><option>기본</option><option>방송</option><option>코스프레</option><option>계절</option><option>기타</option></select>
+        <div class="photo-input-area full">
+  <div class="photo-input-head"><b>사진 등록</b><button class="btn small-btn" type="button" id="addPhotoRow">+ 사진 추가</button></div>
+  <div id="photoRows"></div>
+  <div class="photo-help">각 사진마다 URL과 설명을 따로 입력할 수 있어.</div>
+</div>
+        <textarea id="detail" placeholder="의상 설명 (선택)"></textarea>
+        <div class="adminrow full">
+          <button class="btn active" type="submit" id="saveBtn">의상 추가</button>
+          <button class="btn" type="button" id="cancelEdit">취소</button>
+          <button class="btn" type="button" id="logout">로그아웃</button>
+        </div>
+      </form>
+      <div class="admin-list" id="adminList"></div>
+    </div>
+  </div>
+</header>
+
+<main class="container">
+  <section class="hero">
+    <div>
+      <div class="eyebrow">SKY COLLECTION</div>
+      <h1>의상목록</h1>
+      <p class="desc">하늘이의 다양한 의상을 한곳에서 확인할 수 있어.</p>
+    </div>
+  </section>
+  <div class="filters" id="filters"></div>
+  <section class="grid" id="grid"></section>
+</main>
+
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <div class="modal-top"><button class="close" id="closeModal">×</button></div>
+    <div class="detail">
+      <div class="detail-img" id="modalImage"></div>
+      <div>
+        <div class="detail-cat" id="modalCat"></div>
+        <h2 id="modalName"></h2>
+        <div class="detail-text" id="modalDetail"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer class="footer">© 2026 SKY - DAY</footer>
+
+<!-- SKY-DAY FORCE ADMIN PASSWORD V2 -->
+
+<!-- SKY-DAY RENDER + POSTGRESQL SYNC V1 -->
+<script>
+
+function calculateUpboCount(text){
+  if(!text) return 0;
+  return String(text)
+    .split(',')
+    .map(s=>s.trim())
+    .filter(Boolean)
+    .reduce((total,item)=>{
+      const m=item.match(/[*×]\s*(\d+)\s*$/);
+      return total + (m ? parseInt(m[1],10) : 1);
+    },0);
+}
+
+(function(){
+  var KEYS = ["gaksky_calendar_shared_v1", "skyCalendarEvents", "sky_notice_data", "skyDresses", "skyUpboItems"];
+  var API = '/api/data/';
+  var PASSWORD = 'soopgodsky221010><';
+
+  // Load the latest shared data before each page's existing scripts run.
+  KEYS.forEach(function(key){
+    try {
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET', API + encodeURIComponent(key), false);
+      xhr.send(null);
+      if (xhr.status === 200) {
+        var result = JSON.parse(xhr.responseText);
+        if (result && result.exists) {
+          localStorage.setItem(key, JSON.stringify(result.value));
+        }
+      }
+    } catch (e) {
+      // If the server is temporarily unavailable, keep the existing local data.
+    }
+  });
+
+  // Keep the existing pages unchanged: intercept only their existing data saves
+  // and mirror them to PostgreSQL.
+  var originalSetItem = Storage.prototype.setItem;
+  Storage.prototype.setItem = function(key, value){
+    originalSetItem.call(this, key, value);
+
+    if (this !== localStorage || KEYS.indexOf(key) === -1) return;
+
+    // Existing pages already require admin mode before editing.
+    // Only administrator saves are sent to the shared database.
+    if (localStorage.getItem('sky_day_shared_admin') !== '1') return;
+
+    try {
+      var xhr = new XMLHttpRequest();
+      xhr.open('PUT', API + encodeURIComponent(key), true);
+      xhr.setRequestHeader('Content-Type', 'application/json');
+      xhr.setRequestHeader('x-admin-password', PASSWORD);
+      xhr.send(JSON.stringify({ value: JSON.parse(value) }));
+    } catch (e) {
+      console.warn('공용 저장에 실패했습니다.', e);
+    }
+  };
+
+  // Other open pages refresh when a shared update is announced.
+  setInterval(function(){
+    KEYS.forEach(function(key){
+      try {
+        fetch(API + encodeURIComponent(key), { cache:'no-store' })
+          .then(function(r){ return r.ok ? r.json() : null; })
+          .then(function(result){
+            if (!result || !result.exists) return;
+            var next = JSON.stringify(result.value);
+            if (localStorage.getItem(key) !== next) {
+              originalSetItem.call(localStorage, key, next);
+              window.dispatchEvent(new StorageEvent('storage', {
+                key:key, newValue:next, storageArea:localStorage
+              }));
+            }
+          })
+          .catch(function(){});
+      } catch(e) {}
+    });
+  }, 10000);
+})();
+</script>
+
+<script>
+(function(){
+  var PASSWORD='soopgodsky221010><';
+  var KEYS=['sky_day_shared_admin_password_v1', 'skyCalAdminPassword', 'sky_notice_password', 'skyDressPassword', 'skyUpboPassword', 'gaksky_admin_password', 'admin_password', 'adminPassword'];
+  KEYS.forEach(function(k){ localStorage.setItem(k,PASSWORD); });
+
+  window.__SKY_DAY_ADMIN_PASSWORD__=function(){ return 'soopgodsky221010><'; };
+  window.SKY_DAY_ADMIN_PASSWORD=PASSWORD;
+})();
+</script>
+
+<script>
+const $=s=>document.querySelector(s);
+const categories=["전체","기본","방송","코스프레","계절","기타"];
+let activeCat="전체", editingId=null;
+let dresses=JSON.parse(localStorage.getItem("skyDresses")||"[]");
+
+function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]))}
+function save(){localStorage.setItem("skyDresses",JSON.stringify(dresses))}
+function render(){
+  $("#filters").innerHTML=categories.map(c=>`<button class="filter ${activeCat===c?"active":""}" data-cat="${c}">${c}</button>`).join("");
+  document.querySelectorAll(".filter").forEach(b=>b.onclick=()=>{activeCat=b.dataset.cat;render()});
+  const list=activeCat==="전체"?dresses:dresses.filter(d=>d.cat===activeCat);
+  $("#grid").innerHTML=list.length?list.map(d=>`
+    <article class="card" data-id="${d.id}">
+      <div class="thumb">${getImages(d)[0]?`<img src="${esc(getImages(d)[0].url)}" alt="">`:`<span class="noimg">이미지 준비중</span>`}</div>
+      <div class="card-body">
+        <div class="cat">${esc(d.cat)}</div>
+        <div class="name">${esc(d.name)}</div>
+        ${d.detail?`<div class="card-desc">${esc(d.detail)}</div>`:""}
+      </div>
+    </article>`).join(""):`<div class="empty">등록된 의상이 아직 없어.</div>`;
+  document.querySelectorAll(".card").forEach(c=>c.onclick=()=>openDetail(c.dataset.id));
+  renderAdmin();
+
+  bindDressCardClicks();}
+function getImages(d){
+  if(Array.isArray(d.images)){
+    return d.images.map(x=>{
+      if(typeof x==="string") return {url:x.trim(),desc:""};
+      return {url:String(x.url||"").trim(),desc:String(x.desc||"").trim()};
+    }).filter(x=>x.url);
+  }
+  return String(d.image||"").split(/\n|,/).map(x=>x.trim()).filter(Boolean).map(url=>({url,desc:""}));
+}
+function parseImageLines(text){
+  return String(text||"").split("\n").map(line=>{
+    const p=line.split("|");
+    return {url:(p.shift()||"").trim(),desc:p.join("|").trim()};
+  }).filter(x=>x.url);
+}
+function addPhotoRow(url="",desc=""){
+  const row=document.createElement("div");
+  row.className="photo-row";
+  row.innerHTML=`<input class="photo-url" placeholder="이미지 URL" value="${esc(url)}"><input class="photo-desc-input" placeholder="사진 설명" value="${esc(desc)}"><button class="btn remove-photo" type="button">삭제</button>`;
+  row.querySelector(".remove-photo").onclick=function(e){
+    e.preventDefault();
+    e.stopPropagation();
+    row.remove();
+    // 사진 입력칸만 삭제하고 관리자 팝업은 유지
+    const drawer=$("#adminDrawer");
+    if(drawer) drawer.classList.add("show");
+    return false;
+  };
+  $("#photoRows").appendChild(row);
+}
+function getPhotoRows(){
+  return [...document.querySelectorAll("#photoRows .photo-row")].map(row=>({
+    url:row.querySelector(".photo-url").value.trim(),
+    desc:row.querySelector(".photo-desc-input").value.trim()
+  })).filter(x=>x.url);
+}
+function setPhotoRows(items){
+  $("#photoRows").innerHTML="";
+  (items&&items.length?items:[{url:"",desc:""}]).forEach(x=>addPhotoRow(x.url||"",x.desc||""));
+}
+$("#addPhotoRow").onclick=()=>addPhotoRow();
+setPhotoRows();
+window.openDetail=function(id){
+  const d=dresses.find(x=>String(x.id)===String(id)); if(!d)return;
+
+  // 관리자 모드에서도 보기 모드와 동일하게 상세 팝업만 표시
+  const images=getImages(d);
+  $("#modalCat").textContent=d.cat;
+  $("#modalName").textContent=d.name;
+  $("#modalDetail").textContent=d.detail||"상세 설명이 없습니다.";
+  if(images.length){
+    const show=(index)=>{
+      const img=images[index];
+      $("#mainDetailImage").innerHTML=`<img src="${esc(img.url)}" alt="">`;
+      $("#photoDescription").textContent=img.desc||"";
+      document.querySelectorAll(".detail-thumb").forEach((x,i)=>x.classList.toggle("active",i===index));
+    };
+    $("#modalImage").innerHTML=`<div class="detail-gallery">
+      <div class="detail-img" id="mainDetailImage"></div>
+      <div class="photo-description" id="photoDescription"></div>
+      ${images.length>1?`<div class="detail-thumbs">${images.map((img,i)=>`<button class="detail-thumb ${i===0?"active":""}" data-index="${i}"><img src="${esc(img.url)}" alt=""></button>`).join("")}</div><div class="photo-count">${images.length}장의 사진</div>`:""}
+    </div>`;
+    document.querySelectorAll(".detail-thumb").forEach(btn=>btn.onclick=()=>show(Number(btn.dataset.index)));
+    show(0);
+  }else $("#modalImage").innerHTML=`<span class="noimg">이미지 준비중</span>`;
+  $("#modalBg").classList.add("show");
+};
+function closeModal(){$("#modalBg").classList.remove("show")}
+$("#closeModal").onclick=closeModal;
+$("#modalBg").onclick=e=>{if(e.target===$("#modalBg"))closeModal()};
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeModal()});
+
+$("#hamb").onclick=e=>{e.stopPropagation();$("#menu").classList.toggle("show");$("#adminDrawer").classList.remove("show")};
+$("#adminBtn").onclick=e=>{e.stopPropagation();$("#adminDrawer").classList.toggle("show");$("#menu").classList.remove("show")};
+document.addEventListener("click",e=>{
+  if(!$("#menu").contains(e.target) && e.target!==$("#hamb")) $("#menu").classList.remove("show");
+  if(!$("#adminDrawer").contains(e.target) && e.target!==$("#adminBtn")) $("#adminDrawer").classList.remove("show");
+});
+function updateThemeIcon(){
+  const isDark=document.body.classList.contains("dark");
+  $("#themeBtn").textContent=isDark?"☾":"☼";
+}
+updateThemeIcon();
+
+$("#themeBtn").onclick=()=>{
+  document.body.classList.toggle("dark");
+  localStorage.setItem(
+    "skyDressTheme",
+    document.body.classList.contains("dark")?"dark":"light"
+  );
+  updateThemeIcon();
+};
+if(localStorage.getItem("skyDressTheme")==="dark")document.body.classList.add("dark");
+
+function showAdmin(){
+  if(localStorage.getItem("sky_day_shared_admin")==="1"){
+    $("#loginArea").classList.add("hidden");$("#adminArea").classList.remove("hidden");
+  }
+}
+showAdmin();
+
+$("#login").onclick=()=>{
+  const pw=$("#pw").value;
+  if(pw===window.__SKY_DAY_ADMIN_PASSWORD__()){
+    localStorage.setItem("sky_day_shared_admin","1");$("#pw").value="";showAdmin();renderAdmin();
+  }else alert("비밀번호가 맞지 않습니다.");
+};
+$("#logout").onclick=()=>{
+  localStorage.removeItem("sky_day_shared_admin");
+  $("#adminArea").classList.add("hidden");$("#loginArea").classList.remove("hidden");
+};
+$("#dressForm").onsubmit=e=>{
+  e.preventDefault();
+  const images=getPhotoRows();
+  const item={
+    id:editingId||Date.now(),
+    name:$("#name").value.trim(),
+    cat:$("#cat").value,
+    image:images[0]?.url||"",
+    images,
+    detail:$("#detail").value.trim()
+  };
+  if(!item.name)return;
+  if(editingId){const i=dresses.findIndex(x=>String(x.id)===String(editingId));if(i>-1)dresses[i]=item}
+  else dresses.unshift(item);
+  save();
+  editingId=null;
+  e.target.reset();
+  setPhotoRows();
+  $("#saveBtn").textContent="의상 추가";
+  render();
+  $("#loginArea").classList.add("hidden");
+  $("#adminArea").classList.remove("hidden");
+  $("#adminDrawer").classList.add("show");
+};
+$("#cancelEdit").addEventListener("click",function(e){
+  e.preventDefault();
+  e.stopPropagation();
+  editingId=null;
+  $("#dressForm").reset();
+  setPhotoRows();
+  $("#saveBtn").textContent="의상 추가";
+  $("#adminDrawer").classList.add("show");
+});
+
+function bindDressCardClicks(){
+  document.querySelectorAll(".dress-card").forEach(card=>{
+    if(card.dataset.bound==="1") return;
+    card.dataset.bound="1";
+    card.addEventListener("click",function(e){
+      e.preventDefault();
+      const id=this.dataset.id;
+      if(id) window.openDetail(id);
+    });
+  });
+}
+
+function renderAdmin(){
+  if(localStorage.getItem("sky_day_shared_admin")!=="1") return;
+
+  const list=$("#adminList");
+  if(!list) return;
+
+  list.innerHTML = dresses.length ? dresses.map(d=>`
+    <div class="admin-item">
+      ${getImages(d)[0] ? `<img class="mini" src="${esc(getImages(d)[0].url)}" alt="">` : `<div class="mini"></div>`}
+      <div class="grow">
+        <b>${esc(d.name)}</b>
+        <div style="color:var(--sub);font-size:11px;margin-top:3px">${esc(d.cat)}</div>
+      </div>
+      <button class="btn edit-dress-btn" type="button" data-id="${d.id}">수정</button>
+      <button class="btn delete-dress-btn" type="button" data-id="${d.id}">삭제</button>
+    </div>
+  `).join("") : `<div style="padding:14px 0;color:var(--sub);font-size:13px">등록된 의상이 없습니다.</div>`;
+
+  list.querySelectorAll(".edit-dress-btn").forEach(btn=>{
+    btn.onclick=function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      const d=dresses.find(x=>String(x.id)===String(this.dataset.id));
+      if(!d) return false;
+      editingId=d.id;
+      $("#name").value=d.name||"";
+      $("#cat").value=d.cat||"기타";
+      $("#detail").value=d.detail||"";
+      setPhotoRows(getImages(d));
+      $("#saveBtn").textContent="의상 수정";
+      $("#adminDrawer").classList.add("show");
+      return false;
+    };
+  });
+
+  list.querySelectorAll(".delete-dress-btn").forEach(btn=>{
+    btn.onclick=function(e){
+      e.preventDefault();
+      e.stopPropagation();
+
+      const id=this.dataset.id;
+      const d=dresses.find(x=>String(x.id)===String(id));
+      if(!d) return false;
+
+      if(!window.confirm(`"${d.name}" 의상을 삭제할까요?`)) return false;
+
+      dresses=dresses.filter(x=>String(x.id)!==String(id));
+      localStorage.setItem("skyDresses", JSON.stringify(dresses));
+
+      // 메인 목록과 관리자 목록을 즉시 갱신하고 팝업 유지
+      render();
+      renderAdmin();
+      $("#loginArea").classList.add("hidden");
+      $("#adminArea").classList.remove("hidden");
+      $("#adminDrawer").classList.add("show");
+      return false;
+    };
+  });
+}
+
+window.editDress=function(id){
+  const d=dresses.find(x=>String(x.id)===String(id));
+  if(!d) return;
+  editingId=d.id;
+  $("#name").value=d.name||"";
+  $("#cat").value=d.cat||"기타";
+  setPhotoRows(getImages(d));
+  $("#detail").value=d.detail||"";
+  $("#saveBtn").textContent="의상 수정";
+};
+
+render();
+</script>
+
+<!-- SKY-DAY SHARED THEME SYNC FINAL -->
+<script>
+(function(){
+  var KEY = 'SKY_DAY_GLOBAL_THEME';
+
+  function getTheme(){
+    return localStorage.getItem(KEY) === 'dark' ? 'dark' : 'light';
+  }
+
+  function apply(theme){
+    var isDark = theme === 'dark';
+    if (document.body) document.body.classList.toggle('dark', isDark);
+
+    var btn = document.getElementById('themeBtn');
+    if(btn){
+      btn.textContent = isDark ? '☾' : '☼';
+      btn.title = isDark ? '라이트모드' : '다크모드';
+      btn.setAttribute('aria-label', btn.title);
+    }
+  }
+
+  function setTheme(theme){
+    localStorage.setItem(KEY, theme);
+    apply(theme);
+  }
+
+  function bind(){
+    apply(getTheme());
+
+    var btn = document.getElementById('themeBtn');
+    if(!btn || btn.dataset.sharedThemeSync === '1') return;
+    btn.dataset.sharedThemeSync = '1';
+
+    // Capture phase: run before each page's original click handler.
+    btn.addEventListener('click', function(e){
+      e.preventDefault();
+      e.stopImmediatePropagation();
+
+      var next = document.body.classList.contains('dark') ? 'light' : 'dark';
+      setTheme(next);
+    }, true);
+  }
+
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', bind);
+  }else{
+    bind();
+  }
+
+  window.addEventListener('storage', function(e){
+    if(e.key === KEY) apply(getTheme());
+  });
+})();
+</script>
+<!-- SKY-DAY SHARED THEME STORAGE V3 -->
+<script>
+(function(){
+ var SHARED='sky-day-shared-theme';
+ var originalGet=Storage.prototype.getItem, originalSet=Storage.prototype.setItem;
+ var aliases=['theme','darkMode','dark-mode','mode','SKY_DAY_GLOBAL_THEME','skyTheme','sky-day-theme'];
+ function alias(k){return aliases.indexOf(String(k))!==-1||String(k)===SHARED;}
+ function valid(v){return v==='light'||v==='dark';}
+ var current=originalGet.call(localStorage,SHARED);
+ if(!valid(current)) originalSet.call(localStorage,SHARED,'light');
+
+ Storage.prototype.getItem=function(k){
+  if(alias(k)){var v=originalGet.call(this,SHARED);return valid(v)?v:'light';}
+  return originalGet.call(this,k);
+ };
+ Storage.prototype.setItem=function(k,v){
+  if(alias(k)){return originalSet.call(this,SHARED,valid(v)?v:'light');}
+  return originalSet.call(this,k,v);
+ };
+
+ function applyShared(){
+  var t=originalGet.call(localStorage,SHARED);
+  t=valid(t)?t:'light';
+  if(typeof window.setTheme==='function'){try{window.setTheme(t);return;}catch(e){}}
+  if(typeof window.apply==='function'){try{window.apply(t);return;}catch(e){}}
+ }
+ document.addEventListener('DOMContentLoaded',function(){
+  applyShared();
+  window.addEventListener('pageshow',applyShared);
+  window.addEventListener('storage',function(e){if(e.key===SHARED&&valid(e.newValue))applyShared();});
+ });
+})();
+</script>
+
+<!-- SKY-DAY COMMON ADMIN MODE V1 -->
+<script>
+(function(){
+  var KEY='sky_day_shared_admin';
+
+  function isAdmin(){
+    return localStorage.getItem(KEY)==='1';
+  }
+
+  // If another page logs in/out while this page is open, refresh the page's own
+  // existing admin UI without changing its design or management functions.
+  window.addEventListener('storage',function(e){
+    if(e.key===KEY) window.location.reload();
+  });
+
+  window.addEventListener('pageshow',function(){
+    // Existing pages keep their own show/hide logic. A reload is only needed when
+    // a bfcache-restored page has stale admin UI after navigating from another page.
+    if(performance && performance.getEntriesByType){
+      var nav=performance.getEntriesByType('navigation')[0];
+      if(nav && nav.type==='back_forward') window.location.reload();
+    }
+  });
+})();
+</script>
+
+</body>
+</html>
